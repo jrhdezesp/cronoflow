@@ -7,3 +7,7 @@ data
 .htaccess
 docs/manual_tecnico
 composer.lock
+data
+vendor
+logs
+renameTo_parameters.txt
