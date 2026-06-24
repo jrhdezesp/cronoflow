@@ -77,7 +77,6 @@ Las microempresas y pequeños comercios administran frecuentemente su inventario
 
 ### Opción A: Docker
 
-```bash
 # 1. Clonar el repositorio
 git clone [https://github.com/tu-usuario/CronoFlow.git](https://github.com/tu-usuario/CronoFlow.git)
 cd CronoFlow
@@ -87,7 +86,7 @@ docker compose up -d
 
 # 3. Acceder a la aplicación
 # App: http://localhost:8080 | DB: localhost:3306
-```
+
 
 ### Opción B: Servidor Local (XAMPP)
 
@@ -96,7 +95,7 @@ docker compose up -d
    * En WAMP: `C:\wamp\www\inventario`
 
 2. **Importar la Base de Datos**:
-   * Accede a phpMyAdmin, crea una base de datos llamada `proyecto_inventario` e importa el script SQL estructurado ubicado en: `docs/scripts/00_init_inventario.sql`.
+   * Accede a phpMyAdmin e importa el script SQL completo ubicado en: `docs/scripts/00_database.sql` (crea la BD y las tablas automáticamente).
 
 3. **Configurar Parámetros del Entorno**:
    * Renombra el archivo `renameTo_parameters.env` a `parameters.env` en la raíz del proyecto.
@@ -156,9 +155,3 @@ proyecto-inventario/
 
 ## 📄 Licencia
 MIT License — Consulta el archivo [LICENSE](LICENSE) para más detalles.
-
----
-
-## 🙌 Créditos
-Desarrollado de manera artesanal por el equipo de ingeniería de **CronoFlow** como una herramienta de transformación digital para las microempresas locales.
-```
