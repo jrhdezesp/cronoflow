@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpdoc>
+  <parser>
+    <target>docs/manual_tecnico</target>
+  </parser>
+  <transformer>
+    <target>docs/manual_tecnico</target>
+  </transformer>
+  <files>
+    <file>index.php</file>
+    <directory>src</directory>
+  </files>
+  <transformations>
+    <template name="clean"/>
+    <template name="checkstyle"/>
+    <template name="responsive"/>
+  </transformations>
+</phpdoc>
