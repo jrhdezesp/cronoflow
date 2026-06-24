@@ -1,0 +1,32 @@
+[
+    {
+        "feature": "Controllers\\Mnt\\Productos",
+        "url": "index.php?page=mnt_productos",
+        "label": "Catálogo de Productos",
+        "icon": "fas fa-boxes"
+    },
+    {
+        "feature": "Controllers\\Mnt\\Categorias",
+        "url": "index.php?page=mnt_categorias",
+        "label": "Categorías",
+        "icon": "fas fa-folder"
+    },
+    {
+        "feature": "Controllers\\Mnt\\Proveedores",
+        "url": "index.php?page=mnt_proveedores",
+        "label": "Proveedores",
+        "icon": "fas fa-truck"
+    },
+    {
+        "feature": "Controllers\\Mnt\\Kardex",
+        "url": "index.php?page=mnt_kardex",
+        "label": "Kardex (Historial)",
+        "icon": "fas fa-exchange-alt"
+    },
+    {
+        "feature": "Controllers\\Mnt\\Usuarios",
+        "url": "index.php?page=mnt_usuarios",
+        "label": "Usuarios",
+        "icon": "fas fa-users-cog"
+    }
+]
