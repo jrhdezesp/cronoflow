@@ -42,10 +42,7 @@ class Site
             "controllers\\sec\\login",
             "controllers\\sec\\logout",
             "controllers\\sec\\perfil",
-            "controllers\\sec\\register",
-            "controllers\\checkout\\accept",
-            "controllers\\checkout\\checkout",
-            "controllers\\checkout\\error"
+            "controllers\\sec\\register"
         );
 
         $normalizedClass = strtolower($resolvedClass);
@@ -71,42 +68,14 @@ class Site
     {
         $safeUrl = json_encode($url);
         $safeMsg = json_encode($msg);
-        echo <<<HTML
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Redireccionando...</title>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <style>
-        body {
-            background-color: #f3f4f6;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
+        $templatePath = "src/Views/templates/redirect_msg.view.tpl";
+        if (file_exists($templatePath)) {
+            $html = file_get_contents($templatePath);
+            $html = str_replace(["{{url}}", "{{msg}}"], [$safeUrl, $safeMsg], $html);
+            echo $html;
+        } else {
+            echo "Error: No se pudo cargar la plantilla de redirección.";
         }
-    </style>
-</head>
-<body>
-    <script>
-        Swal.fire({
-            title: 'Aviso',
-            text: {$safeMsg},
-            icon: 'info',
-            confirmButtonColor: '#10b981',
-            confirmButtonText: 'Aceptar',
-            allowOutsideClick: false
-        }).then((result) => {
-            window.location.assign({$safeUrl});
-        });
-    </script>
-</body>
-</html>
-HTML;
         die();
     }
     public static function addLink($href)
