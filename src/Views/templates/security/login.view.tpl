@@ -445,6 +445,7 @@
       <h2>Iniciar Sesión</h2>
 
       <form method="post" action="index.php?page=sec_login{{if redirto}}&redirto={{redirto}}{{endif redirto}}">
+        <input type="hidden" name="csrf_token" value="{{csrf_token}}" />
         
         <div class="form-group">
           <div class="input-pill-wrapper">

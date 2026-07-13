@@ -17,6 +17,7 @@ class Security {
     }
     public static function login($userId, $userName, $userEmail)
     {
+        session_regenerate_id(true);
         $_SESSION["login"] = array(
             "isLogged" => true,
             "userId" => $userId,
@@ -47,12 +48,8 @@ class Security {
         if (\Utilities\Context::getContextByKey("DEVELOPMENT") == "1") {
             $functionInDb = \Dao\Security\Security::getFeature($function);
             if (!$functionInDb) {
-                \Dao\Security\Security::addNewFeature($function, $function, "ACT", "CTR");
+                error_log("DEV: Feature not found in DB - " . $function);
             }
-        }
-        // Bypass para el Propietario / SuperUsuario (Acceso total automático)
-        if (self::isInRol($userId, "PRP")) {
-            return true;
         }
         return \Dao\Security\Security::getFeatureByUsuario($userId, $function);
     }
@@ -62,7 +59,7 @@ class Security {
         if (\Utilities\Context::getContextByKey("DEVELOPMENT") == "1") {
             $rolInDb = \Dao\Security\Security::getRol($rol);
             if (!$rolInDb) {
-                \Dao\Security\Security::addNewRol($rol, $rol, "ACT");
+                error_log("DEV: Rol not found in DB - " . $rol);
             }
         }
         return \Dao\Security\Security::isUsuarioInRol($userId, $rol);

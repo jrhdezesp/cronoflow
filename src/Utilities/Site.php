@@ -56,11 +56,14 @@ class Site
     }
     public static function redirectTo($url)
     {
+        $url = str_replace(array("\r", "\n"), "", $url);
         if (Context::getContextByKey("USE_URLREWRITE") == "1") {
             header("Location:" . \Views\Renderer::rewriteUrl($url));
         } else { 
             header("Location:" . $url);
         }
+        die();
+    }
         
         die();
     }

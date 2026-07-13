@@ -1,10 +1,8 @@
 <?php
 namespace Dao\Security;
 
-if (version_compare(phpversion(), '7.4.0', '<')) {
-        define('PASSWORD_ALGORITHM', 1);  //BCRYPT
-} else {
-    define('PASSWORD_ALGORITHM', '2y');  //BCRYPT
+if (!defined('PASSWORD_ALGORITHM')) {
+    define('PASSWORD_ALGORITHM', PASSWORD_BCRYPT);
 }
 /*
 usercod     bigint(10) AI PK
@@ -25,6 +23,12 @@ use Exception;
 
 class Security extends \Dao\Table
 {
+    /**
+     * @param string $filter Raw SQL WHERE clause - use with caution, must be parameterized
+     * @param array $params Parameters for the query
+     * @param int $page Page number
+     * @param int $items Items per page
+     */
     static public function getUsuarios($filter = "", $params = [], $page = -1, $items = 0)
     {
         $sqlstr = "SELECT * FROM usuario";
@@ -228,7 +232,7 @@ class Security extends \Dao\Table
 
     static public function removeFeatureFromRol($fncod, $rolescod)
     {
-        $sqldel = "UPDATE funciones_roles set roleuserest='INA'
+        $sqldel = "UPDATE funciones_roles SET fnrolest='INA'
         where fncod=:fncod and rolescod=:rolescod;";
         return self::executeNonQuery(
             $sqldel,
@@ -258,6 +262,9 @@ class Security extends \Dao\Table
 
     static public function updatePassword($usercod, $newPassword)
     {
+        if (!\Utilities\Validators::IsValidPassword($newPassword)) {
+            throw new \Exception("Contraseña debe ser almenos 8 caracteres, 1 número, 1 mayúscula, 1 símbolo especial");
+        }
         $hashedPassword = self::_hashPassword($newPassword);
         $sqlstr = "UPDATE `usuario` SET `userpswd` = :userpswd, `userpswdchg` = NOW() WHERE `usercod` = :usercod;";
         return self::executeNonQuery($sqlstr, [
@@ -298,16 +305,14 @@ class Security extends \Dao\Table
         return self::executeNonQuery($sqlstr, ["usercod" => $usercod]);
     }
 
-    static public function registrarIntentoFallido($usercod, $currentAttempts)
+    static public function registrarIntentoFallido($usercod)
     {
-        $newAttempts = $currentAttempts + 1;
-        if ($newAttempts >= 3) {
-            $sqlstr = "UPDATE `usuario` SET `userfailedattempts` = :attempts, `userest` = 'BLQ', `userblockedat` = NOW() WHERE `usercod` = :usercod;";
-            return self::executeNonQuery($sqlstr, ["attempts" => $newAttempts, "usercod" => $usercod]);
-        } else {
-            $sqlstr = "UPDATE `usuario` SET `userfailedattempts` = :attempts WHERE `usercod` = :usercod;";
-            return self::executeNonQuery($sqlstr, ["attempts" => $newAttempts, "usercod" => $usercod]);
-        }
+        $sqlstr = "UPDATE `usuario` SET 
+            `userfailedattempts` = `userfailedattempts` + 1,
+            `userest` = CASE WHEN `userfailedattempts` + 1 >= 3 THEN 'BLQ' ELSE `userest` END,
+            `userblockedat` = CASE WHEN `userfailedattempts` + 1 >= 3 THEN NOW() ELSE `userblockedat` END
+            WHERE `usercod` = :usercod;";
+        return self::executeNonQuery($sqlstr, ["usercod" => $usercod]);
     }
 
     private function __construct()

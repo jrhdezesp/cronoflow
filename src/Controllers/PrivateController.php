@@ -39,12 +39,12 @@ abstract class PrivateController extends PublicController
         }
 
         $dbUser = \Dao\Security\Security::getUsuarioByCode(\Utilities\Security::getUserId());
-        if (!$dbUser || $dbUser["userest"] !== "ACT") {
+        if (!$dbUser || !isset($dbUser["userest"]) || $dbUser["userest"] !== "ACT") {
             \Utilities\Security::logout();
             throw new PrivateNoLoggedException();
         }
     }
-    protected function isFeatureAutorized($feature) :bool
+    protected function isFeatureAuthorized($feature) :bool
     {
         return \Utilities\Security::isAuthorized(
             \Utilities\Security::getUserId(),

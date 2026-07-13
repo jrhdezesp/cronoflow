@@ -49,8 +49,10 @@ class Renderer
         if (is_array($global_context)) {
             $datos = array_merge($global_context, $datos);
         }
-        //union de variables de sessión
-        $datos = array_merge($_SESSION, $datos);
+        //union de variables de sessión - solo las permitidas
+        if (isset($_SESSION["login"])) {
+            $datos["login"] = $_SESSION["login"];
+        }
         if (isset($datos["layoutFile"])) {
             $layoutFile = $datos["layoutFile"];
         }
@@ -71,7 +73,7 @@ class Renderer
                     $htmlContent
                 );
                 //Limpiar Saltos de Pagina
-                if (strpos($htmlContent, "<pre>")) {
+                if (strpos($htmlContent, "<pre>") !== false) {
                 } else {
                     $htmlContent = str_replace("\n", "", $htmlContent);
                     $htmlContent = str_replace("\r", "", $htmlContent);
@@ -342,6 +344,9 @@ class Renderer
                             $item = isset($context[$index]) ? $context[$index] : "";
                         }
                     }
+                    if (is_string($item)) {
+                        $item = htmlspecialchars($item, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8', false);
+                    }
                 }
                 $renderedHTML .= $item;
             }
@@ -401,7 +406,10 @@ class Renderer
         foreach ($template_code as $node) {
             if (strpos($node, "index.php?page=")  !== false) {
                 $pageStart = strpos($node, "=") + 1;
-                $pageEnd = strpos($node, "&")?:strlen($node);
+                $pageEnd = strpos($node, "&");
+                if ($pageEnd === false) {
+                    $pageEnd = strlen($node);
+                }
                 $pageValueLength = $pageEnd - $pageStart;
                 $page = substr($node, $pageStart, $pageValueLength);
                 $query = substr($node, $pageEnd + 1);

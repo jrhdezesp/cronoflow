@@ -33,6 +33,12 @@ try {
     $redirTo = urlencode(\Utilities\Context::getContextByKey("request_uri"));
     \Utilities\Site::redirectTo("index.php?page=sec.login&redirto=".$redirTo);
     die();
+} catch(\Exception $ex)
+{
+    error_log($ex);
+    $instance = new \Controllers\Error();
+    $instance->run();
+    die();
 } catch(Error $ex)
 {
     error_log($ex);

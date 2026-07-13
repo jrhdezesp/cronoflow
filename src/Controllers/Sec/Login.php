@@ -1,5 +1,15 @@
 <?php
 namespace Controllers\Sec;
+
+use Utilities\Site;
+use Utilities\Validators;
+use Utilities\Security as SecurityUtils;
+use Utilities\Context;
+use Utilities\LoginAttemptLogger;
+use Utilities\CSRF;
+use Dao\Security\Security;
+use Views\Renderer;
+
 class Login extends \Controllers\PublicController
 {
     private $txtEmail = "";
@@ -11,101 +21,106 @@ class Login extends \Controllers\PublicController
 
     public function run() :void
     {
-        if (\Utilities\Security::isLogged()) {
-            \Utilities\Site::redirectTo("index.php");
+        if (SecurityUtils::isLogged()) {
+            Site::redirectTo("index.php");
         }
 
         if ($this->isPostBack()) {
-            $this->txtEmail = $_POST["txtEmail"];
-            $this->txtPswd = $_POST["txtPswd"];
+            if (!CSRF::validateToken()) {
+                $this->generalError = "Solicitud inválida. Intente nuevamente.";
+                $this->hasError = true;
+            } else {
+                $this->txtEmail = $_POST["txtEmail"];
+                $this->txtPswd = $_POST["txtPswd"];
+                $ip = LoginAttemptLogger::getClientIp();
 
-            if (!\Utilities\Validators::IsValidEmail($this->txtEmail)) {
-                $this->errorEmail = "¡Correo no tiene el formato adecuado!";
-                $this->hasError = true;
+                if (!Validators::IsValidEmail($this->txtEmail)) {
+                    $this->errorEmail = "¡Correo no tiene el formato adecuado!";
+                    $this->hasError = true;
+                    LoginAttemptLogger::logAttempt($ip, hash("sha256", $this->txtEmail), false, "email-invalido");
+                }
+                if (Validators::IsEmpty($this->txtPswd)) {
+                    $this->errorPswd = "¡Debe ingresar una contraseña!";
+                    $this->hasError = true;
+                    LoginAttemptLogger::logAttempt($ip, hash("sha256", $this->txtEmail), false, "password-vacio");
+                }
             }
-            if (\Utilities\Validators::IsEmpty($this->txtPswd)) {
-                $this->errorPswd = "¡Debe ingresar una contraseña!";
-                $this->hasError = true;
-            }
+
             if (! $this->hasError) {
-                if ($dbUser = \Dao\Security\Security::getUsuarioByEmail($this->txtEmail)) {
-                    if ($dbUser["userest"] === "BLQ") {
-                        $blockedAt = strtotime($dbUser["userblockedat"]);
-                        $now = time();
-                        $diffSeconds = $now - $blockedAt;
-                        if ($diffSeconds >= 300) {
-                            \Dao\Security\Security::resetearIntentos($dbUser["usercod"]);
-                            $dbUser = \Dao\Security\Security::getUsuarioByEmail($this->txtEmail);
-                        } else {
-                            $remainingSeconds = 300 - $diffSeconds;
-                            $remainingMinutes = ceil($remainingSeconds / 60);
-                            $this->generalError = sprintf("Tu cuenta está bloqueada temporalmente por seguridad. Inténtalo de nuevo en %d minuto(s).", $remainingMinutes);
-                            $this->hasError = true;
-                        }
-                    }
+                // Use constant-time comparison to prevent timing attacks
+                $dbUser = Security::getUsuarioByEmail($this->txtEmail);
+                $userExists = ($dbUser !== false);
 
-                    if (!$this->hasError && $dbUser["userest"] !== "ACT") {
-                        $this->generalError = "¡Credenciales son incorrectas!";
-                        $this->hasError = true;
-                        error_log(
-                            sprintf(
-                                "ERROR: %d %s tiene cuenta con estado %s",
-                                $dbUser["usercod"],
-                                $dbUser["useremail"],
-                                $dbUser["userest"]
-                            )
-                        );
-                    }
-
-                    if (!$this->hasError) {
-                        if (!\Dao\Security\Security::verifyPassword($this->txtPswd, $dbUser["userpswd"])) {
-                            \Dao\Security\Security::registrarIntentoFallido($dbUser["usercod"], intval($dbUser["userfailedattempts"]));
-                            
-                            $attemptsLeft = 2 - intval($dbUser["userfailedattempts"]);
-                            if ($attemptsLeft <= 0) {
-                                $this->generalError = "Tu cuenta ha sido bloqueada temporalmente por seguridad por 5 minutos.";
-                            } else {
-                                $this->generalError = sprintf("¡Credenciales son incorrectas! Intentos restantes antes del bloqueo: %d", $attemptsLeft);
-                            }
-                            $this->hasError = true;
-                            error_log(
-                                sprintf(
-                                    "ERROR: %d %s contraseña incorrecta",
-                                    $dbUser["usercod"],
-                                    $dbUser["useremail"]
-                                )
-                            );
-                        }
-                    }
-
-                    if (! $this->hasError) {
-                        \Dao\Security\Security::resetearIntentos($dbUser["usercod"]);
-                        \Utilities\Security::login(
-                            $dbUser["usercod"],
-                            $dbUser["username"],
-                            $dbUser["useremail"]
-                        );
-                        if (\Utilities\Context::getContextByKey("redirto") !== "") {
-                            \Utilities\Site::redirectTo(
-                                \Utilities\Context::getContextByKey("redirto")
-                             );
-                        } else {
-                            \Utilities\Site::redirectTo("index.php");
-                        }
-                    }
+                // Always perform a dummy verify to keep timing constant
+                $passwordValid = false;
+                if ($userExists) {
+                    $passwordValid = Security::verifyPassword($this->txtPswd, $dbUser["userpswd"]);
                 } else {
-                    error_log(
-                        sprintf(
-                            "ERROR: %s trato de ingresar",
-                            $this->txtEmail
-                        )
-                    );
+                    Security::verifyPassword("dummy_constant_time_check", '$2y$10$dummyhashfordummyhashcheck');
+                }
+
+                if (!$userExists) {
+                    error_log("ERROR: Intento de login con correo no registrado");
+                    LoginAttemptLogger::logAttempt($ip, hash("sha256", $this->txtEmail), false, "usuario-no-encontrado");
                     $this->generalError = "¡Credenciales son incorrectas!";
+                    $this->hasError = true;
+                } elseif ($dbUser["userest"] === "BLQ") {
+                    $blockedAt = strtotime($dbUser["userblockedat"]);
+                    $now = time();
+                    $diffSeconds = $now - $blockedAt;
+                    if ($diffSeconds >= 300) {
+                        Security::resetearIntentos($dbUser["usercod"]);
+                        $dbUser = Security::getUsuarioByEmail($this->txtEmail);
+                    } else {
+                        $remainingSeconds = 300 - $diffSeconds;
+                        $remainingMinutes = ceil($remainingSeconds / 60);
+                        $this->generalError = "Tu cuenta está temporalmente bloqueada por seguridad. Inténtalo más tarde.";
+                        $this->hasError = true;
+                    }
+                }
+
+                if (!$this->hasError && $dbUser["userest"] !== "ACT") {
+                    $this->generalError = "¡Credenciales son incorrectas!";
+                    $this->hasError = true;
+                    error_log("ERROR: Cuenta con estado " . $dbUser["userest"]);
+                }
+
+                if (!$this->hasError && !$passwordValid) {
+                    Security::registrarIntentoFallido($dbUser["usercod"]);
+                    LoginAttemptLogger::logAttempt($ip, hash("sha256", $this->txtEmail), false, "password-incorrecto");
+
+                    $dbUserAfter = Security::getUsuarioByEmail($this->txtEmail);
+                    $attemptsUsed = intval($dbUserAfter["userfailedattempts"]);
+                    $attemptsLeft = 3 - $attemptsUsed;
+
+                    if ($attemptsLeft <= 0) {
+                        $this->generalError = "Tu cuenta ha sido bloqueada temporalmente por seguridad por 5 minutos.";
+                    } else {
+                        $this->generalError = sprintf("¡Credenciales son incorrectas! Intentos restantes: %d", $attemptsLeft);
+                    }
+                    $this->hasError = true;
+                    error_log("ERROR: Contraseña incorrecta para usuario");
+                }
+
+                if (! $this->hasError) {
+                    Security::resetearIntentos($dbUser["usercod"]);
+                    LoginAttemptLogger::logAttempt($ip, hash("sha256", $this->txtEmail), true, "login-exitoso");
+                    SecurityUtils::login(
+                        $dbUser["usercod"],
+                        $dbUser["username"],
+                        $dbUser["useremail"]
+                    );
+                    if (Context::getContextByKey("redirto") !== "") {
+                        Site::redirectTo(Context::getContextByKey("redirto"));
+                    } else {
+                        Site::redirectTo("index.php");
+                    }
                 }
             }
         }
         $dataView = get_object_vars($this);
-        \Views\Renderer::render("security/login", $dataView, "loginlayout.view.tpl");
+        $dataView["csrf_token"] = CSRF::generateToken();
+        Renderer::render("security/login", $dataView, "loginlayout.view.tpl");
     }
 }
 ?>
