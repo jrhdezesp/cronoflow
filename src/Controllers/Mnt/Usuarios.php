@@ -45,10 +45,10 @@ class Usuarios extends PrivateController
         }
 
         $viewData["Usuarios"] = $usersFormatted;
-        $viewData["CanInsert"] = self::isFeatureAutorized("Controllers\\Mnt\\Usuario\\New");
-        $viewData["CanUpdate"] = self::isFeatureAutorized("Controllers\\Mnt\\Usuario\\Upd");
+        $viewData["CanInsert"] = $this->isFeatureAuthorized("Controllers\\Mnt\\Usuario\\New");
+        $viewData["CanUpdate"] = $this->isFeatureAuthorized("Controllers\\Mnt\\Usuario\\Upd");
         $viewData["CanDelete"] = false; // Completely disabled to protect logs/audit trail
-        $viewData["CanView"] = self::isFeatureAutorized("Controllers\\Mnt\\Usuario\\Dsp");
+        $viewData["CanView"] = $this->isFeatureAuthorized("Controllers\\Mnt\\Usuario\\Dsp");
 
         Renderer::render("mnt/usuarios", $viewData);
     }

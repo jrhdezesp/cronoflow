@@ -24,14 +24,17 @@ class Productos extends PrivateController
         ];
 
         // Permissions
-        $viewData["CanInsert"] = self::isFeatureAutorized("Controllers\\Mnt\\Producto\\New");
-        $viewData["CanUpdate"] = self::isFeatureAutorized("Controllers\\Mnt\\Producto\\Upd");
-        $viewData["CanView"] = self::isFeatureAutorized("Controllers\\Mnt\\Producto\\Dsp");
+        $viewData["CanInsert"] = $this->isFeatureAuthorized("Controllers\\Mnt\\Producto\\New");
+        $viewData["CanUpdate"] = $this->isFeatureAuthorized("Controllers\\Mnt\\Producto\\Upd");
+        $viewData["CanView"] = $this->isFeatureAuthorized("Controllers\\Mnt\\Producto\\Dsp");
 
         // Handle stock adjustment POSTback
         if ($this->isPostBack()) {
             if (isset($_POST["action"]) && $_POST["action"] === "ajuste_stock") {
-                if (!self::isFeatureAutorized("Controllers\\Mnt\\Producto\\Upd")) {
+                if (!\Utilities\CSRF::validateToken()) {
+                    \Utilities\Site::redirectToWithMsg("index.php?page=mnt_productos", "¡Solicitud inválida!");
+                }
+                if (!$this->isFeatureAuthorized("Controllers\\Mnt\\Producto\\Upd")) {
                     \Utilities\Site::redirectToWithMsg("index.php?page=mnt_productos", "¡No tiene permisos para realizar esta acción!");
                 }
                 $prdId = isset($_POST["invPrdId"]) ? intval($_POST["invPrdId"]) : 0;
@@ -273,6 +276,8 @@ class Productos extends PrivateController
             $viewData["show_categories"] = true;
             $viewData["Categorias"] = DaoProductos::getCategorias();
         }
+
+        $viewData["csrf_token"] = \Utilities\CSRF::generateToken();
 
         Renderer::render("mnt/productos", $viewData);
     }

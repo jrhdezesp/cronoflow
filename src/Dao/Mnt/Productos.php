@@ -83,16 +83,15 @@ class Productos extends \Dao\Table
             ]);
 
             if ($result) {
-                $lastId = self::obtenerUnRegistro("SELECT LAST_INSERT_ID() as id;", []);
+                $lastId = $conn->lastInsertId();
                 if ($lastId && $stock > 0 && !empty($loteCod)) {
-                    $prdId = $lastId["id"];
+                    $prdId = intval($lastId);
                     self::registrarLote($prdId, $loteCod, $stock, $loteFechaVencimiento, $cost);
-                    $loteResult = self::obtenerUnRegistro("SELECT LAST_INSERT_ID() as id;", []);
-                    $loteId = $loteResult ? $loteResult["id"] : null;
+                    $loteId = $conn->lastInsertId();
                     self::registrarMovimiento($prdId, "ENT", $stock, "Ingreso de stock inicial", $userId, $loteId);
                 }
                 $conn->commit();
-                return $lastId ? $lastId["id"] : true;
+                return $lastId;
             }
             
             $conn->rollBack();
@@ -141,6 +140,10 @@ class Productos extends \Dao\Table
 
     static public function registrarLote($invPrdId, $loteCod, $cantidad, $fechaVencimiento, $costoUnitario)
     {
+        $existing = self::getLoteByCode($invPrdId, $loteCod);
+        if ($existing) {
+            throw new \Exception("El código de lote '$loteCod' ya existe para este producto.");
+        }
         $sqlins = "INSERT INTO lotes_inventario (
             invPrdId, loteCod, loteCantOriginal, loteCantActual, loteFechaIngreso, loteFechaVencimiento, loteCostoUnitario, loteEst
         ) VALUES (
@@ -165,7 +168,6 @@ class Productos extends \Dao\Table
     {
         if ($costo !== null) {
             $sqlupd = "UPDATE lotes_inventario SET 
-                loteCantOriginal = loteCantOriginal + :cantidad, 
                 loteCantActual = loteCantActual + :cantidad,
                 loteCostoUnitario = :costo,
                 loteEst = 'ACT'
@@ -173,7 +175,6 @@ class Productos extends \Dao\Table
             return self::executeNonQuery($sqlupd, ["loteId" => $loteId, "cantidad" => $cantidad, "costo" => $costo]);
         } else {
             $sqlupd = "UPDATE lotes_inventario SET 
-                loteCantOriginal = loteCantOriginal + :cantidad, 
                 loteCantActual = loteCantActual + :cantidad,
                 loteEst = 'ACT'
                 WHERE loteId = :loteId;";
@@ -191,6 +192,7 @@ class Productos extends \Dao\Table
 
     static public function actualizarCantidadLote($loteId, $nuevaCantActual)
     {
+        $nuevaCantActual = max(0, intval($nuevaCantActual));
         $est = $nuevaCantActual <= 0 ? 'AGT' : 'ACT';
         $sqlupd = "UPDATE lotes_inventario SET 
             loteCantActual = :loteCantActual,

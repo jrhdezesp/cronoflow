@@ -61,13 +61,13 @@ class Categoria extends PrivateController
             Site::redirectToWithMsg("index.php?page=mnt_categorias", "¡Acción no permitida!");
         }
 
-        if ($this->mode === "INS" && !self::isFeatureAutorized("Controllers\\Mnt\\Categoria\\New")) {
+        if ($this->mode === "INS" && !$this->isFeatureAuthorized("Controllers\\Mnt\\Categoria\\New")) {
             Site::redirectToWithMsg("index.php?page=mnt_categorias", "¡No tiene permisos para realizar esta acción!");
         }
-        if ($this->mode === "UPD" && !self::isFeatureAutorized("Controllers\\Mnt\\Categoria\\Upd")) {
+        if ($this->mode === "UPD" && !$this->isFeatureAuthorized("Controllers\\Mnt\\Categoria\\Upd")) {
             Site::redirectToWithMsg("index.php?page=mnt_categorias", "¡No tiene permisos para realizar esta acción!");
         }
-        if ($this->mode === "DSP" && !self::isFeatureAutorized("Controllers\\Mnt\\Categoria\\Dsp")) {
+        if ($this->mode === "DSP" && !$this->isFeatureAuthorized("Controllers\\Mnt\\Categoria\\Dsp")) {
             Site::redirectToWithMsg("index.php?page=mnt_categorias", "¡No tiene permisos para realizar esta acción!");
         }
 

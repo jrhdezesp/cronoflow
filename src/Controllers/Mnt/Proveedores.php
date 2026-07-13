@@ -17,9 +17,9 @@ class Proveedores extends PrivateController
             "CanView" => false
         ];
 
-        $viewData["CanInsert"] = self::isFeatureAutorized("Controllers\\Mnt\\Proveedor\\New");
-        $viewData["CanUpdate"] = self::isFeatureAutorized("Controllers\\Mnt\\Proveedor\\Upd");
-        $viewData["CanView"] = self::isFeatureAutorized("Controllers\\Mnt\\Proveedor\\Dsp");
+        $viewData["CanInsert"] = $this->isFeatureAuthorized("Controllers\\Mnt\\Proveedor\\New");
+        $viewData["CanUpdate"] = $this->isFeatureAuthorized("Controllers\\Mnt\\Proveedor\\Upd");
+        $viewData["CanView"] = $this->isFeatureAuthorized("Controllers\\Mnt\\Proveedor\\Dsp");
 
         $rawProveedores = DaoProveedores::getProveedores();
         $formattedProveedores = [];

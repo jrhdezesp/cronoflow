@@ -145,6 +145,7 @@
     </div>
     <form id="stock-adjust-form" action="index.php?page=mnt_productos&catid={{catid}}" method="POST">
       <input type="hidden" name="action" value="ajuste_stock" />
+      <input type="hidden" name="csrf_token" value="{{csrf_token}}" />
       <input type="hidden" id="modal-prd-id" name="invPrdId" value="" />
       
       <div class="modal_body">

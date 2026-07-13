@@ -41,8 +41,6 @@ class Producto extends PrivateController
 
         if ($this->isPostBack()) {
             $this->_handlePost();
-        } else {
-            $this->_handleGet();
         }
 
         $this->_prepareViewData();
@@ -78,13 +76,13 @@ class Producto extends PrivateController
             Site::redirectToWithMsg("index.php?page=mnt_productos", "¡Acción no permitida!");
         }
 
-        if ($this->mode === "INS" && !self::isFeatureAutorized("Controllers\\Mnt\\Producto\\New")) {
+        if ($this->mode === "INS" && !$this->isFeatureAuthorized("Controllers\\Mnt\\Producto\\New")) {
             Site::redirectToWithMsg("index.php?page=mnt_productos", "¡No tiene permisos para realizar esta acción!");
         }
-        if ($this->mode === "UPD" && !self::isFeatureAutorized("Controllers\\Mnt\\Producto\\Upd")) {
+        if ($this->mode === "UPD" && !$this->isFeatureAuthorized("Controllers\\Mnt\\Producto\\Upd")) {
             Site::redirectToWithMsg("index.php?page=mnt_productos", "¡No tiene permisos para realizar esta acción!");
         }
-        if ($this->mode === "DSP" && !self::isFeatureAutorized("Controllers\\Mnt\\Producto\\Dsp")) {
+        if ($this->mode === "DSP" && !$this->isFeatureAuthorized("Controllers\\Mnt\\Producto\\Dsp")) {
             Site::redirectToWithMsg("index.php?page=mnt_productos", "¡No tiene permisos para realizar esta acción!");
         }
 
@@ -112,31 +110,25 @@ class Producto extends PrivateController
         if ($this->mode === "INS") {
             $this->product["invPrdPrecioVenta"] = isset($_POST["invPrdPrecioVenta"]) ? floatval($_POST["invPrdPrecioVenta"]) : 0.00;
             $this->product["invPrdCosto"] = isset($_POST["invPrdCosto"]) ? floatval($_POST["invPrdCosto"]) : 0.00;
+            $newStock = isset($_POST["invPrdStock"]) ? intval($_POST["invPrdStock"]) : 0;
+            $this->product["invPrdStockMin"] = isset($_POST["invPrdStockMin"]) ? intval($_POST["invPrdStockMin"]) : 10;
         } else {
             $dbProduct = DaoProductos::getProductoByCode($this->id);
             if ($dbProduct) {
                 $this->product["invPrdPrecioVenta"] = floatval($dbProduct["invPrdPrecioVenta"]);
                 $this->product["invPrdCosto"] = floatval($dbProduct["invPrdCosto"]);
+                $this->product["invPrdStockMin"] = isset($_POST["invPrdStockMin"]) ? intval($_POST["invPrdStockMin"]) : intval($dbProduct["invPrdStockMin"]);
             }
+            $newStock = intval($this->product["invPrdStock"]);
         }
-        
-        $this->product["invPrdStockMin"] = isset($_POST["invPrdStockMin"]) ? intval($_POST["invPrdStockMin"]) : 10;
-        $this->product["invPrdTip"] = isset($_POST["invPrdTip"]) ? $_POST["invPrdTip"] : "PRD";
-        
-        $this->selectedEst = isset($_POST["invPrdEst"]) ? $_POST["invPrdEst"] : "DIS";
+        $this->product["invPrdStock"] = $newStock;
 
+        $this->product["invPrdTip"] = isset($_POST["invPrdTip"]) ? $_POST["invPrdTip"] : "PRD";
+        $this->selectedEst = isset($_POST["invPrdEst"]) ? $_POST["invPrdEst"] : "DIS";
         $loteCod = isset($_POST["loteCod"]) ? trim($_POST["loteCod"]) : "";
         $loteFechaVencimiento = isset($_POST["loteFechaVencimiento"]) ? trim($_POST["loteFechaVencimiento"]) : "";
         $this->product["loteCod"] = $loteCod;
         $this->product["loteFechaVencimiento"] = $loteFechaVencimiento;
-
-        // Collect stock (can only change stock in INS mode directly, otherwise keep database stock)
-        if ($this->mode === "INS") {
-            $newStock = isset($_POST["invPrdStock"]) ? intval($_POST["invPrdStock"]) : 0;
-        } else {
-            $newStock = intval($this->product["invPrdStock"]);
-        }
-        $this->product["invPrdStock"] = $newStock;
 
         // Validations
         if (Validators::IsEmpty($this->product["invPrdDsc"])) {
@@ -219,35 +211,36 @@ class Producto extends PrivateController
             $userId = \Utilities\Security::getUserId();
 
             if ($this->mode === "INS") {
-                $result = DaoProductos::newProducto(
-                    $this->product["invPrdBrCod"],
-                    $this->product["invPrdCodInt"],
-                    $this->product["invPrdDsc"],
-                    $this->product["catid"],
-                    $this->product["invPrdPrecioVenta"],
-                    $this->product["invPrdCosto"],
-                    $newStock,
-                    $this->product["invPrdStockMin"],
-                    $this->product["invPrdTip"],
-                    $this->product["invPrdEst"],
-                    $userId,
-                    $loteCod,
-                    $loteFechaVencimiento,
-                    $this->product["provId"]
-                );
-
-                if ($result) {
-                    Site::redirectToWithMsg(
-                        "index.php?page=mnt_productos&catid=" . $this->product["catid"],
-                        "¡Producto creado exitosamente!"
+                try {
+                    $result = DaoProductos::newProducto(
+                        $this->product["invPrdBrCod"],
+                        $this->product["invPrdCodInt"],
+                        $this->product["invPrdDsc"],
+                        $this->product["catid"],
+                        $this->product["invPrdPrecioVenta"],
+                        $this->product["invPrdCosto"],
+                        $newStock,
+                        $this->product["invPrdStockMin"],
+                        $this->product["invPrdTip"],
+                        $this->product["invPrdEst"],
+                        $userId,
+                        $loteCod,
+                        $loteFechaVencimiento,
+                        $this->product["provId"]
                     );
-                } else {
-                    $this->aErrors[] = "Hubo un error al crear el producto en la base de datos.";
+
+                    if ($result) {
+                        Site::redirectToWithMsg(
+                            "index.php?page=mnt_productos&catid=" . $this->product["catid"],
+                            "¡Producto creado exitosamente!"
+                        );
+                    } else {
+                        $this->aErrors[] = "Hubo un error al crear el producto en la base de datos.";
+                    }
+                } catch (\Exception $ex) {
+                    $this->aErrors[] = $ex->getMessage();
                 }
             } elseif ($this->mode === "UPD") {
-                $oldProduct = DaoProductos::getProductoByCode($this->id);
-                $oldStock = $oldProduct ? intval($oldProduct["invPrdStock"]) : 0;
-
                 $result = DaoProductos::updateProducto(
                     $this->id,
                     $this->product["invPrdBrCod"],
@@ -265,28 +258,6 @@ class Producto extends PrivateController
                 );
 
                 if ($result) {
-                    // Kardex Log: Check stock difference
-                    if ($newStock !== $oldStock) {
-                        $diff = $newStock - $oldStock;
-                        if ($diff > 0) {
-                            DaoProductos::registrarMovimiento(
-                                $this->id,
-                                "ENT",
-                                $diff,
-                                "Ajuste manual de inventario (Incremento)",
-                                $userId
-                            );
-                        } else {
-                            DaoProductos::registrarMovimiento(
-                                $this->id,
-                                "MER",
-                                abs($diff),
-                                "Ajuste manual de inventario (Disminución / Merma)",
-                                $userId
-                            );
-                        }
-                    }
-
                     Site::redirectToWithMsg(
                         "index.php?page=mnt_productos&catid=" . $this->product["catid"],
                         "¡Producto actualizado exitosamente!"
@@ -296,11 +267,6 @@ class Producto extends PrivateController
                 }
             }
         }
-    }
-
-    private function _handleGet()
-    {
-        // Handled by _initParams loader
     }
 
     private function _prepareViewData()

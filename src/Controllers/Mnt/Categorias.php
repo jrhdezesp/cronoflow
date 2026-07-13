@@ -19,9 +19,9 @@ class Categorias extends PrivateController
         ];
 
         // Mapear los permisos de seguridad
-        $viewData["CanInsert"] = self::isFeatureAutorized("Controllers\\Mnt\\Categoria\\New");
-        $viewData["CanUpdate"] = self::isFeatureAutorized("Controllers\\Mnt\\Categoria\\Upd");
-        $viewData["CanView"] = self::isFeatureAutorized("Controllers\\Mnt\\Categoria\\Dsp");
+        $viewData["CanInsert"] = $this->isFeatureAuthorized("Controllers\\Mnt\\Categoria\\New");
+        $viewData["CanUpdate"] = $this->isFeatureAuthorized("Controllers\\Mnt\\Categoria\\Upd");
+        $viewData["CanView"] = $this->isFeatureAuthorized("Controllers\\Mnt\\Categoria\\Dsp");
 
         // Cargar todas las categorías
         $rawCategorias = DaoCategorias::getCategorias();

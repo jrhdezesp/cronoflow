@@ -62,13 +62,13 @@ class Proveedor extends PrivateController
             Site::redirectToWithMsg("index.php?page=mnt_proveedores", "Accion no permitida.");
         }
 
-        if ($this->mode === "INS" && !self::isFeatureAutorized("Controllers\\Mnt\\Proveedor\\New")) {
+        if ($this->mode === "INS" && !$this->isFeatureAuthorized("Controllers\\Mnt\\Proveedor\\New")) {
             Site::redirectToWithMsg("index.php?page=mnt_proveedores", "¡No tiene permisos para realizar esta acción!");
         }
-        if ($this->mode === "UPD" && !self::isFeatureAutorized("Controllers\\Mnt\\Proveedor\\Upd")) {
+        if ($this->mode === "UPD" && !$this->isFeatureAuthorized("Controllers\\Mnt\\Proveedor\\Upd")) {
             Site::redirectToWithMsg("index.php?page=mnt_proveedores", "¡No tiene permisos para realizar esta acción!");
         }
-        if ($this->mode === "DSP" && !self::isFeatureAutorized("Controllers\\Mnt\\Proveedor\\Dsp")) {
+        if ($this->mode === "DSP" && !$this->isFeatureAuthorized("Controllers\\Mnt\\Proveedor\\Dsp")) {
             Site::redirectToWithMsg("index.php?page=mnt_proveedores", "¡No tiene permisos para realizar esta acción!");
         }
 
