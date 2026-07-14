@@ -36,12 +36,14 @@ try {
 } catch(\Exception $ex)
 {
     error_log($ex);
+    error_log("Ruta solicitada: " . ($pageRequest ?? "N/A"));
     $instance = new \Controllers\Error();
     $instance->run();
     die();
 } catch(Error $ex)
 {
     error_log($ex);
+    error_log("Ruta solicitada: " . ($pageRequest ?? "N/A"));
     $instance = new \Controllers\Error();
     $instance->run();
     die();
