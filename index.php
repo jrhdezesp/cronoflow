@@ -16,10 +16,23 @@ use Utilities\Site;
 require __DIR__ . '/vendor/autoload.php';
 session_start();
 
-\Utilities\Site::configure();
+try {
+    \Utilities\Site::configure();
+} catch (\Exception $ex) {
+    error_log("Error en Site::configure: " . $ex);
+} catch (\Error $ex) {
+    error_log("Error fatal en Site::configure: " . $ex);
+}
 
-
-$pageRequest = \Utilities\Site::getPageRequest();
+try {
+    $pageRequest = \Utilities\Site::getPageRequest();
+} catch (\Exception $ex) {
+    error_log("Error en getPageRequest: " . $ex);
+    $pageRequest = "Controllers\\Error";
+} catch (\Error $ex) {
+    error_log("Error fatal en getPageRequest: " . $ex);
+    $pageRequest = "Controllers\\Error";
+}
 
 try {
     $instance = new $pageRequest();
