@@ -33,6 +33,7 @@ class Index extends PublicController
             \Utilities\Site::redirectTo("index.php?page=sec_login");
         }
         \Utilities\Site::redirectTo("index.php?page=admin_admin");
+        die();
     }
 }
 

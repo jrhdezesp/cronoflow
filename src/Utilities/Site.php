@@ -17,11 +17,15 @@ class Site
     {
         $pageRequest = "index";
         if (\Utilities\Security::isLogged()) {
-            $pageRequest = "admin\\admin";
+            $pageRequest = "Admin\\Admin";
         }
         if (isset($_GET["page"])) {
             $pageRequest = str_replace(array("_", "-", "."), "\\", $_GET["page"]);
         }
+        
+        $segments = explode("\\", $pageRequest);
+        $segments = array_map('ucfirst', $segments);
+        $pageRequest = implode("\\", $segments);
         
         $resolvedClass = "Controllers\\" . $pageRequest;
         
@@ -62,9 +66,6 @@ class Site
         } else { 
             header("Location:" . $url);
         }
-        die();
-    }
-        
         die();
     }
     public static function redirectToWithMsg($url, $msg)
