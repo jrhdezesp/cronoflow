@@ -6,6 +6,12 @@
         "icon": "fas fa-boxes"
     },
     {
+        "feature": "Controllers\\Mnt\\Ventas",
+        "url": "index.php?page=mnt_ventas",
+        "label": "Ventas",
+        "icon": "fas fa-shopping-cart"
+    },
+    {
         "feature": "Controllers\\Mnt\\Categorias",
         "url": "index.php?page=mnt_categorias",
         "label": "Categorías",

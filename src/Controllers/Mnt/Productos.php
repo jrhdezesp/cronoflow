@@ -3,7 +3,10 @@
 namespace Controllers\Mnt;
 
 use Controllers\PrivateController;
+use Dao\Mnt\Batches as DaoBatches;
+use Dao\Mnt\ProductsStock as DaoProductsStock;
 use Dao\Mnt\Productos as DaoProductos;
+use Dao\Mnt\StockMovements as DaoStockMovements;
 use Views\Renderer;
 
 class Productos extends PrivateController
@@ -151,8 +154,9 @@ class Productos extends PrivateController
 
                     if ($updateResult) {
                         if ($tipo === "ENT") {
-                            // Entrada por Compra: Crear o actualizar lote
+                            // Entrada por Compra: crear o actualizar lote/batch
                             $existingLoteEnt = DaoProductos::getLoteByCode($prdId, $loteCod);
+                            $existingBatchEnt = DaoBatches::getBatchByCode($prdId, $loteCod);
                             if ($existingLoteEnt) {
                                 DaoProductos::incrementarLote($existingLoteEnt["loteId"], $cantidad, $costo);
                                 $loteId = $existingLoteEnt["loteId"];
@@ -161,15 +165,34 @@ class Productos extends PrivateController
                                 $loteResult = DaoProductos::getLoteByCode($prdId, $loteCod);
                                 $loteId = $loteResult ? $loteResult["loteId"] : null;
                             }
+
+                            if ($existingBatchEnt) {
+                                DaoBatches::incrementBatch($existingBatchEnt["batchId"], $cantidad, $costo);
+                                $batchId = $existingBatchEnt["batchId"];
+                            } else {
+                                DaoBatches::createBatch($prdId, $loteCod, $cantidad, $loteFechaVencimiento, $costo);
+                                $batch = DaoBatches::getBatchByCode($prdId, $loteCod);
+                                $batchId = $batch ? $batch["batchId"] : null;
+                            }
+
                             DaoProductos::registrarMovimiento($prdId, $tipo, $cantidad, $motivo, $userId, $loteId);
+                            if (!empty($batchId)) {
+                                DaoStockMovements::registerMovement($prdId, $batchId, $tipo, $cantidad, $motivo, 'stock_adjustment', null, $userId);
+                            }
                         } else {
-                            // Salida/Merma: Descontar de lote específico o aplicar PEPS
+                            // Salida/Merma: descontar de lote específico o aplicar PEPS
                             if ($existingLote !== null) {
+                                $batch = DaoBatches::getBatchByCode($prdId, $loteCod);
+                                if ($batch) {
+                                    DaoBatches::consumeBatch($batch["batchId"], $cantidad);
+                                    DaoStockMovements::registerMovement($prdId, $batch["batchId"], $tipo, $cantidad, $motivo, 'stock_adjustment', null, $userId);
+                                }
+
                                 $cantActual = intval($existingLote["loteCantActual"]);
                                 DaoProductos::actualizarCantidadLote($existingLote["loteId"], $cantActual - $cantidad);
                                 DaoProductos::registrarMovimiento($prdId, $tipo, $cantidad, $motivo, $userId, $existingLote["loteId"]);
                             } else {
-                                // Salida/Merma: Descontar de lotes activos usando PEPS (FIFO)
+                                // Salida/Merma: descontar de lotes activos usando PEPS (FIFO)
                                 $lotes = DaoProductos::getLotesActivos($prdId);
                                 $cantRestante = $cantidad;
                                 foreach ($lotes as $lote) {

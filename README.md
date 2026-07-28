@@ -96,6 +96,7 @@ docker compose up -d
 
 2. **Importar la Base de Datos**:
    * Accede a phpMyAdmin e importa el script SQL completo ubicado en: `docs/scripts/00_database.sql` (crea la BD y las tablas automáticamente).
+   * Para agregar soporte de ventas y movimiento de stock, importa adicionalmente: `docs/scripts/06_sales_stock.sql`.
 
 3. **Configurar Parámetros del Entorno**:
    * Renombra el archivo `renameTo_parameters.env` a `parameters.env` en la raíz del proyecto.

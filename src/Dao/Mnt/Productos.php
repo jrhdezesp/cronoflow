@@ -89,6 +89,22 @@ class Productos extends \Dao\Table
                     self::registrarLote($prdId, $loteCod, $stock, $loteFechaVencimiento, $cost);
                     $loteId = $conn->lastInsertId();
                     self::registrarMovimiento($prdId, "ENT", $stock, "Ingreso de stock inicial", $userId, $loteId);
+                    $batchId = null;
+                    Batches::createBatch($prdId, $loteCod, $stock, $loteFechaVencimiento, $cost);
+                    $batch = Batches::getBatchByCode($prdId, $loteCod);
+                    if ($batch) {
+                        $batchId = $batch["batchId"];
+                        StockMovements::registerMovement(
+                            $prdId,
+                            $batchId,
+                            'ENT',
+                            $stock,
+                            'Ingreso de stock inicial',
+                            'product',
+                            $batchId,
+                            $userId
+                        );
+                    }
                 }
                 $conn->commit();
                 return $lastId;
