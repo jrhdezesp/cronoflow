@@ -8,8 +8,14 @@ class Site
     {
         $donenv = new \Utilities\DotEnv("parameters.env");
         \Utilities\Context::setArrayToContext($donenv->load());
-        $baseDir = \Utilities\Context::getContextByKey("BASE_DIR");
-        $basePath = $baseDir ? "/" . trim($baseDir, "/") : "";
+        $baseDir = trim(\Utilities\Context::getContextByKey("BASE_DIR"), "/");
+        if ($baseDir === "") {
+            $scriptName = $_SERVER["SCRIPT_NAME"] ?? "";
+            $scriptDir = rtrim(dirname($scriptName), "/\\");
+            $basePath = ($scriptDir === "" || $scriptDir === "/") ? "" : $scriptDir;
+        } else {
+            $basePath = "/" . $baseDir;
+        }
         \Utilities\Context::setContext("BASE_PATH", $basePath);
         date_default_timezone_set(\Utilities\Context::getContextByKey("TIMEZONE"));
     }

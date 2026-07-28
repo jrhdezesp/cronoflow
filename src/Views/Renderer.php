@@ -85,7 +85,8 @@ class Renderer
                 $htmlResult = self::_renderTemplate($template_code, $datos);
 
                 if ($render) {
-                    if($datos["USE_URLREWRITE"] == "1") {
+                    $useUrlRewrite = isset($datos["USE_URLREWRITE"]) && $datos["USE_URLREWRITE"] === "1";
+                    if ($useUrlRewrite) {
                         echo self::rewriteUrl($htmlResult);
                     } else {
                         echo $htmlResult;
@@ -402,7 +403,8 @@ class Renderer
             PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY
         );
         $htmlBuffer = "";
-        $basedir = \Utilities\Context::getContextByKey("BASE_DIR");
+        $basedir = trim(\Utilities\Context::getContextByKey("BASE_DIR"), "/");
+        $basePrefix = $basedir === "" ? "" : "/" . $basedir;
         foreach ($template_code as $node) {
             if (strpos($node, "index.php?page=")  !== false) {
                 $pageStart = strpos($node, "=") + 1;
@@ -414,12 +416,12 @@ class Renderer
                 $page = substr($node, $pageStart, $pageValueLength);
                 $query = substr($node, $pageEnd + 1);
 
-                $url = "/" . $basedir . "/" . str_replace(array("_",".","-"), "/", $page);
-                $url .= strlen($query)?"/?".$query:"/";
+                $url = $basePrefix . "/" . str_replace(array("_",".","-"), "/", $page);
+                $url .= strlen($query) ? "/?" . $query : "/";
                 $htmlBuffer .= $url;
             } else {
                 if ($node == "index.php") {
-                    $htmlBuffer .= "/" . $basedir . "/index";
+                    $htmlBuffer .= $basePrefix . "/index";
                 } else {
                     $htmlBuffer .= $node;
                 }

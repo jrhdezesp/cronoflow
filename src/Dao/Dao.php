@@ -43,10 +43,18 @@ class Dao {
                 array(
                   \PDO::ATTR_EMULATE_PREPARES => false,
                   \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
-                  \PDO::ATTR_PERSISTENT => false,
-                  \PDO::MYSQL_ATTR_INIT_COMMAND => "SET time_zone = '" . $_timezone . "'"
+                  \PDO::ATTR_PERSISTENT => false
                 )
             );
+
+            if (!empty($_timezone)) {
+                try {
+                    $quotedTimezone = self::$_conn->quote($_timezone);
+                    self::$_conn->exec("SET time_zone = " . $quotedTimezone);
+                } catch (\PDOException $ex) {
+                    error_log("WARNING: No se pudo establecer time_zone MySQL '" . $_timezone . "': " . $ex->getMessage());
+                }
+            }
         }
         return self::$_conn;
     }
