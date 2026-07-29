@@ -75,19 +75,30 @@ class Batches extends \Dao\Table
             throw new \Exception("Batch no encontrado para incrementar.");
         }
 
+        $conn = self::getConn();
+
         $sqlupd = "UPDATE batches SET
-            batchQuantityOriginal = batchQuantityOriginal + :cantidad,
-            batchQuantityAvailable = batchQuantityAvailable + :cantidad,
-            batchCostoUnitario = CASE WHEN :costoUnitario IS NOT NULL THEN :costoUnitario ELSE batchCostoUnitario END,
+            batchQuantityOriginal = batchQuantityOriginal + ?,
+            batchQuantityAvailable = batchQuantityAvailable + ?,
             batchStatus = 'ACT',
             updatedAt = NOW()
-            WHERE batchId = :batchId;";
+            WHERE batchId = ?;";
 
-        return self::executeNonQuery($sqlupd, [
-            "batchId" => $batchId,
-            "cantidad" => $cantidad,
-            "costoUnitario" => $costoUnitario
-        ]);
+        $stmt = $conn->prepare($sqlupd);
+        $stmt->bindValue(1, intval($cantidad), \PDO::PARAM_INT);
+        $stmt->bindValue(2, intval($cantidad), \PDO::PARAM_INT);
+        $stmt->bindValue(3, intval($batchId), \PDO::PARAM_INT);
+        $result = $stmt->execute();
+
+        if ($result && $costoUnitario !== null) {
+            $sqlupdCost = "UPDATE batches SET batchCostoUnitario = ? WHERE batchId = ?;";
+            $stmtCost = $conn->prepare($sqlupdCost);
+            $stmtCost->bindValue(1, $costoUnitario, \PDO::PARAM_STR);
+            $stmtCost->bindValue(2, intval($batchId), \PDO::PARAM_INT);
+            $stmtCost->execute();
+        }
+
+        return $result;
     }
 
     static public function reserveBatch($batchId, $quantity)
@@ -175,14 +186,16 @@ class Batches extends \Dao\Table
         }
 
         $sqlupd = "UPDATE batches SET
-            batchQuantityAvailable = batchQuantityAvailable - :quantity,
-            batchStatus = CASE WHEN (batchQuantityAvailable - :quantity + batchQuantityReserved) = 0 THEN 'AGT' ELSE 'ACT' END,
+            batchQuantityAvailable = batchQuantityAvailable - ?,
+            batchStatus = CASE WHEN (batchQuantityAvailable - ? + batchQuantityReserved) = 0 THEN 'AGT' ELSE 'ACT' END,
             updatedAt = NOW()
-            WHERE batchId = :batchId;";
+            WHERE batchId = ?;";
 
-        return self::executeNonQuery($sqlupd, [
-            "batchId" => $batchId,
-            "quantity" => $quantity
-        ]);
+        $conn = self::getConn();
+        $stmt = $conn->prepare($sqlupd);
+        $stmt->bindValue(1, intval($quantity), \PDO::PARAM_INT);
+        $stmt->bindValue(2, intval($quantity), \PDO::PARAM_INT);
+        $stmt->bindValue(3, intval($batchId), \PDO::PARAM_INT);
+        return $stmt->execute();
     }
 }

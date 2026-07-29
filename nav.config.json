@@ -24,6 +24,12 @@
         "icon": "fas fa-truck"
     },
     {
+        "feature": "Controllers\\Mnt\\Movimientos",
+        "url": "index.php?page=mnt_movimientos",
+        "label": "Movimientos",
+        "icon": "fas fa-exchange-alt"
+    },
+    {
         "feature": "Controllers\\Mnt\\Kardex",
         "url": "index.php?page=mnt_kardex",
         "label": "Kardex (Historial)",

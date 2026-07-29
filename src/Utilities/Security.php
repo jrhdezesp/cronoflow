@@ -45,6 +45,15 @@ class Security {
     }
     public static function isAuthorized($userId, $function):bool
     {
+        if (empty($userId)) {
+            return false;
+        }
+
+        $dbUser = \Dao\Security\Security::getUsuarioByCode($userId);
+        if ($dbUser && isset($dbUser["usertipo"]) && in_array($dbUser["usertipo"], ["ADM", "PRP"], true)) {
+            return true;
+        }
+
         if (\Utilities\Context::getContextByKey("DEVELOPMENT") == "1") {
             $functionInDb = \Dao\Security\Security::getFeature($function);
             if (!$functionInDb) {

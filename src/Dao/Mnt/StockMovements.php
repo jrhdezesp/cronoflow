@@ -12,7 +12,8 @@ class StockMovements extends \Dao\Table
         $reason,
         $referenceType = null,
         $referenceId = null,
-        $userId = null
+        $userId = null,
+        $conn = null
     ) {
         $sqlins = "INSERT INTO stock_movements (
             invPrdId,
@@ -25,27 +26,27 @@ class StockMovements extends \Dao\Table
             createdBy,
             createdAt
         ) VALUES (
-            :invPrdId,
-            :batchId,
-            :movementType,
-            :quantity,
-            :reason,
-            :referenceType,
-            :referenceId,
-            :createdBy,
+            ?,
+            ?,
+            ?,
+            ?,
+            ?,
+            ?,
+            ?,
+            ?,
             NOW()
         );";
 
-        return self::executeNonQuery($sqlins, [
-            "invPrdId" => $invPrdId,
-            "batchId" => $batchId,
-            "movementType" => $movementType,
-            "quantity" => $quantity,
-            "reason" => $reason,
-            "referenceType" => $referenceType,
-            "referenceId" => $referenceId,
-            "createdBy" => $userId
-        ]);
+        $stmt = $conn ? $conn->prepare($sqlins) : self::getConn()->prepare($sqlins);
+        $stmt->bindValue(1, intval($invPrdId), \PDO::PARAM_INT);
+        $stmt->bindValue(2, $batchId !== null ? intval($batchId) : null, \PDO::PARAM_INT);
+        $stmt->bindValue(3, $movementType, \PDO::PARAM_STR);
+        $stmt->bindValue(4, intval($quantity), \PDO::PARAM_INT);
+        $stmt->bindValue(5, $reason, \PDO::PARAM_STR);
+        $stmt->bindValue(6, $referenceType, \PDO::PARAM_STR);
+        $stmt->bindValue(7, $referenceId !== null ? intval($referenceId) : null, \PDO::PARAM_INT);
+        $stmt->bindValue(8, $userId !== null ? intval($userId) : null, \PDO::PARAM_INT);
+        return $stmt->execute();
     }
 
     static public function getMovementsByProduct($invPrdId, $limit = 100)

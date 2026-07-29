@@ -2,9 +2,11 @@
 
 namespace Utilities;
 
-class Nav {
+class Nav
+{
 
-    public static function setNavContext(){
+    public static function setNavContext()
+    {
         $tmpNAVIGATION = array();
         $userID = \Utilities\Security::getUserId();
 
@@ -23,7 +25,23 @@ class Nav {
         }
 
         foreach ($items as $item) {
-            if (isset($item["feature"]) && \Utilities\Security::isAuthorized($userID, $item["feature"])) {
+            $feature = isset($item["feature"]) ? $item["feature"] : "";
+            $isAuthorized = true;
+
+            if (!empty($feature)) {
+                $isAuthorized = \Utilities\Security::isAuthorized($userID, $feature);
+
+                if (!$isAuthorized) {
+                    $dbUser = \Dao\Security\Security::getUsuarioByCode($userID);
+                    $isAdmin = $dbUser
+                        && isset($dbUser["usertipo"])
+                        && in_array($dbUser["usertipo"], ["ADM", "PRP"], true);
+
+                    $isAuthorized = $isAdmin;
+                }
+            }
+
+            if ($isAuthorized) {
                 $tmpNAVIGATION[] = array(
                     "nav_url" => $item["url"],
                     "nav_label" => $item["label"],
@@ -35,12 +53,6 @@ class Nav {
         \Utilities\Context::setContext("NAVIGATION", $tmpNAVIGATION);
     }
 
-    private function __construct()
-    {
-        
-    }
-    private function __clone()
-    {
-        
-    }
+    private function __construct() {}
+    private function __clone() {}
 }

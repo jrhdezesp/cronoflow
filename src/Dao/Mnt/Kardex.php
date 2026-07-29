@@ -27,54 +27,89 @@ class Kardex extends \Dao\Table
         $page = 1,
         $pageSize = 50
     ) {
-        $sql = "SELECT 
-                    m.movId, 
-                    m.invPrdId, 
-                    m.loteId, 
-                    m.movTipo, 
-                    m.movCantidad, 
-                    m.movMotivo, 
-                    m.movCreatedAt, 
-                    m.movCreatedBy,
-                    p.invPrdBrCod, 
-                    p.invPrdDsc,
-                    u.username,
-                    l.loteCod
-                FROM movimientos_inventario m
-                INNER JOIN productos p ON m.invPrdId = p.invPrdId
-                INNER JOIN usuario u ON m.movCreatedBy = u.usercod
-                LEFT JOIN lotes_inventario l ON m.loteId = l.loteId
+        $sql = "SELECT
+                    movId,
+                    invPrdId,
+                    loteId,
+                    movTipo,
+                    movCantidad,
+                    movMotivo,
+                    movCreatedAt,
+                    movCreatedBy,
+                    invPrdBrCod,
+                    invPrdDsc,
+                    username,
+                    loteCod
+                FROM (
+                    SELECT
+                        sm.movementId AS movId,
+                        sm.invPrdId,
+                        sm.batchId AS loteId,
+                        sm.movementType AS movTipo,
+                        sm.quantity AS movCantidad,
+                        sm.reason AS movMotivo,
+                        sm.createdAt AS movCreatedAt,
+                        sm.createdBy AS movCreatedBy,
+                        p.invPrdBrCod,
+                        p.invPrdDsc,
+                        u.username,
+                        b.batchCode AS loteCod
+                    FROM stock_movements sm
+                    INNER JOIN productos p ON sm.invPrdId = p.invPrdId
+                    LEFT JOIN usuario u ON sm.createdBy = u.usercod
+                    LEFT JOIN batches b ON sm.batchId = b.batchId
+
+                    UNION ALL
+
+                    SELECT
+                        m.movId,
+                        m.invPrdId,
+                        m.loteId,
+                        m.movTipo,
+                        m.movCantidad,
+                        m.movMotivo,
+                        m.movCreatedAt,
+                        m.movCreatedBy,
+                        p.invPrdBrCod,
+                        p.invPrdDsc,
+                        u.username,
+                        l.loteCod
+                    FROM movimientos_inventario m
+                    INNER JOIN productos p ON m.invPrdId = p.invPrdId
+                    LEFT JOIN usuario u ON m.movCreatedBy = u.usercod
+                    LEFT JOIN lotes_inventario l ON m.loteId = l.loteId
+                ) AS combined
                 WHERE 1 = 1";
 
         $params = [];
 
         if (!empty($searchQuery)) {
-            $sql .= " AND (p.invPrdDsc LIKE :searchQuery OR p.invPrdBrCod LIKE :searchQuery)";
+            $sql .= " AND (combined.invPrdDsc LIKE :searchQuery OR combined.invPrdBrCod LIKE :searchQuery)";
             $params["searchQuery"] = $searchQuery;
         }
 
         if (!empty($movTipo)) {
-            $sql .= " AND m.movTipo = :movTipo";
+            $sql .= " AND combined.movTipo = :movTipo";
             $params["movTipo"] = $movTipo;
         }
 
         if (!empty($year)) {
-            $sql .= " AND YEAR(m.movCreatedAt) = :year";
+            $sql .= " AND YEAR(combined.movCreatedAt) = :year";
             $params["year"] = $year;
         }
 
         if (!empty($month)) {
-            $sql .= " AND MONTH(m.movCreatedAt) = :month";
+            $sql .= " AND MONTH(combined.movCreatedAt) = :month";
             $params["month"] = $month;
         }
 
         if (!empty($fechaInicio) && !empty($fechaFin)) {
-            $sql .= " AND DATE(m.movCreatedAt) BETWEEN :fechaInicio AND :fechaFin";
+            $sql .= " AND DATE(combined.movCreatedAt) BETWEEN :fechaInicio AND :fechaFin";
             $params["fechaInicio"] = $fechaInicio;
             $params["fechaFin"] = $fechaFin;
         }
 
-        $sql .= " ORDER BY m.movCreatedAt DESC";
+        $sql .= " ORDER BY combined.movCreatedAt DESC";
 
         if ($pageSize > 0) {
             $offset = ($page - 1) * $pageSize;
@@ -100,36 +135,71 @@ class Kardex extends \Dao\Table
         $fechaFin = ""
     ) {
         $sql = "SELECT COUNT(*) as total
-                FROM movimientos_inventario m
-                INNER JOIN productos p ON m.invPrdId = p.invPrdId
-                INNER JOIN usuario u ON m.movCreatedBy = u.usercod
-                LEFT JOIN lotes_inventario l ON m.loteId = l.loteId
+                FROM (
+                    SELECT
+                        sm.movementId AS movId,
+                        sm.invPrdId,
+                        sm.batchId AS loteId,
+                        sm.movementType AS movTipo,
+                        sm.quantity AS movCantidad,
+                        sm.reason AS movMotivo,
+                        sm.createdAt AS movCreatedAt,
+                        sm.createdBy AS movCreatedBy,
+                        p.invPrdBrCod,
+                        p.invPrdDsc,
+                        u.username,
+                        b.batchCode AS loteCod
+                    FROM stock_movements sm
+                    INNER JOIN productos p ON sm.invPrdId = p.invPrdId
+                    LEFT JOIN usuario u ON sm.createdBy = u.usercod
+                    LEFT JOIN batches b ON sm.batchId = b.batchId
+
+                    UNION ALL
+
+                    SELECT
+                        m.movId,
+                        m.invPrdId,
+                        m.loteId,
+                        m.movTipo,
+                        m.movCantidad,
+                        m.movMotivo,
+                        m.movCreatedAt,
+                        m.movCreatedBy,
+                        p.invPrdBrCod,
+                        p.invPrdDsc,
+                        u.username,
+                        l.loteCod
+                    FROM movimientos_inventario m
+                    INNER JOIN productos p ON m.invPrdId = p.invPrdId
+                    LEFT JOIN usuario u ON m.movCreatedBy = u.usercod
+                    LEFT JOIN lotes_inventario l ON m.loteId = l.loteId
+                ) AS combined
                 WHERE 1 = 1";
 
         $params = [];
 
         if (!empty($searchQuery)) {
-            $sql .= " AND (p.invPrdDsc LIKE :searchQuery OR p.invPrdBrCod LIKE :searchQuery)";
+            $sql .= " AND (combined.invPrdDsc LIKE :searchQuery OR combined.invPrdBrCod LIKE :searchQuery)";
             $params["searchQuery"] = $searchQuery;
         }
 
         if (!empty($movTipo)) {
-            $sql .= " AND m.movTipo = :movTipo";
+            $sql .= " AND combined.movTipo = :movTipo";
             $params["movTipo"] = $movTipo;
         }
 
         if (!empty($year)) {
-            $sql .= " AND YEAR(m.movCreatedAt) = :year";
+            $sql .= " AND YEAR(combined.movCreatedAt) = :year";
             $params["year"] = $year;
         }
 
         if (!empty($month)) {
-            $sql .= " AND MONTH(m.movCreatedAt) = :month";
+            $sql .= " AND MONTH(combined.movCreatedAt) = :month";
             $params["month"] = $month;
         }
 
         if (!empty($fechaInicio) && !empty($fechaFin)) {
-            $sql .= " AND DATE(m.movCreatedAt) BETWEEN :fechaInicio AND :fechaFin";
+            $sql .= " AND DATE(combined.movCreatedAt) BETWEEN :fechaInicio AND :fechaFin";
             $params["fechaInicio"] = $fechaInicio;
             $params["fechaFin"] = $fechaFin;
         }

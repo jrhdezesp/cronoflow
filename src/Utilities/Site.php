@@ -43,6 +43,7 @@ class Site
             "controllers\\mnt\\categorias",
             "controllers\\mnt\\categoria",
             "controllers\\mnt\\kardex",
+            "controllers\\mnt\\movimientos",
             "controllers\\mnt\\ventas",
             "controllers\\mnt\\productos",
             "controllers\\mnt\\producto",

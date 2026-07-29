@@ -372,6 +372,12 @@ VALUES (
         'CTR'
     ),
     (
+        'Controllers\\Mnt\\Movimientos',
+        'Movimientos de Inventario',
+        'ACT',
+        'CTR'
+    ),
+    (
         'Controllers\\Mnt\\Ventas',
         'Listado de Ventas',
         'ACT',
@@ -557,6 +563,3 @@ VALUES (
     )
 ON DUPLICATE KEY UPDATE
     `fnrolest` = VALUES(`fnrolest`);
-    
-
-  
