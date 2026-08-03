@@ -33,10 +33,13 @@ class POS extends \Dao\Table
     {
         $sqlstr = "SELECT * FROM clientes 
                    WHERE clienteEst = 'ACT' 
-                   AND (clienteNombre LIKE :query OR clienteTelefono LIKE :query)
+                   AND (clienteNombre LIKE :query_nombre OR clienteTelefono LIKE :query_telefono)
                    ORDER BY clienteNombre ASC 
                    LIMIT 10;";
-        return self::obtenerRegistros($sqlstr, ["query" => "%" . $query . "%"]);
+        return self::obtenerRegistros($sqlstr, [
+            "query_nombre" => "%" . $query . "%",
+            "query_telefono" => "%" . $query . "%"
+        ]);
     }
 
     /**
@@ -72,12 +75,16 @@ class POS extends \Dao\Table
                    FROM productos p 
                    LEFT JOIN categorias c ON p.catid = c.catid 
                    WHERE p.invPrdEst = 'ACT' 
-                   AND (p.invPrdDsc LIKE :query 
-                        OR p.invPrdBrCod LIKE :query 
-                        OR p.invPrdCodInt LIKE :query)
+                   AND (p.invPrdDsc LIKE :query_nombre 
+                        OR p.invPrdBrCod LIKE :query_barras 
+                        OR p.invPrdCodInt LIKE :query_interno)
                    ORDER BY p.invPrdDsc ASC 
                    LIMIT 20;";
-        return self::obtenerRegistros($sqlstr, ["query" => "%" . $query . "%"]);
+        return self::obtenerRegistros($sqlstr, [
+            "query_nombre" => "%" . $query . "%",
+            "query_barras" => "%" . $query . "%",
+            "query_interno" => "%" . $query . "%"
+        ]);
     }
 
     /**

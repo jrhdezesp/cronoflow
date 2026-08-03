@@ -3,7 +3,7 @@
 namespace Controllers\Mnt;
 
 use Controllers\PrivateController;
-use Dao\Mnt\Sales as DaoSales;
+use Dao\Mnt\POS as DaoPOS;
 use Views\Renderer;
 
 class Ventas extends PrivateController
@@ -18,17 +18,17 @@ class Ventas extends PrivateController
         $viewData["CanView"] = $this->isFeatureAuthorized("Controllers\\Mnt\\Ventas");
 
         if ($viewData["CanView"]) {
-            $rawSales = DaoSales::getSales();
+            $rawSales = DaoPOS::getVentas();
             $formattedSales = [];
             foreach ($rawSales as $sale) {
                 $formattedSales[] = [
-                    "saleId" => $sale["saleId"],
-                    "saleNumber" => $sale["saleNumber"],
-                    "saleDate" => date("d/m/Y H:i", strtotime($sale["saleDate"])),
-                    "customerName" => $sale["customerName"] ?: "Cliente General",
-                    "saleTotal" => number_format(floatval($sale["saleTotal"]), 2),
-                    "saleStatus" => $sale["saleStatus"],
-                    "saleStatusClass" => $sale["saleStatus"] === "CLS" ? "badge-success" : ($sale["saleStatus"] === "CAN" ? "badge-error" : "badge-warning")
+                    "saleId" => $sale["ventaId"],
+                    "saleNumber" => $sale["ventaCod"],
+                    "saleDate" => date("d/m/Y H:i", strtotime($sale["ventaCreatedAt"])),
+                    "customerName" => $sale["clienteNombre"] ?: "Cliente General",
+                    "saleTotal" => number_format(floatval($sale["ventaTotal"]), 2),
+                    "saleStatus" => $sale["ventaEst"],
+                    "saleStatusClass" => $sale["ventaEst"] === "ACT" ? "badge-success" : ($sale["ventaEst"] === "ANU" ? "badge-error" : "badge-warning")
                 ];
             }
             $viewData["Sales"] = $formattedSales;

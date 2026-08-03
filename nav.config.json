@@ -6,6 +6,18 @@
         "icon": "fas fa-boxes"
     },
     {
+        "feature": "Controllers\\POS",
+        "url": "index.php?page=pos",
+        "label": "POS",
+        "icon": "fas fa-cash-register"
+    },
+    {
+        "feature": "Controllers\\Mnt\\Clientes",
+        "url": "index.php?page=mnt_clientes",
+        "label": "Clientes",
+        "icon": "fas fa-user-friends"
+    },
+    {
         "feature": "Controllers\\Mnt\\Ventas",
         "url": "index.php?page=mnt_ventas",
         "label": "Ventas",

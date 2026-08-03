@@ -41,11 +41,11 @@ class POS extends PrivateController
         ];
 
         // Permisos
-        $viewData["canProcessSale"] = self::isFeatureAutorized("Controllers\\POS\\ProcessSale");
-        $viewData["canOpenSession"] = self::isFeatureAutorized("Controllers\\POS\\OpenSession");
-        $viewData["canCloseSession"] = self::isFeatureAutorized("Controllers\\POS\\CloseSession");
-        $viewData["canAnulateSale"] = self::isFeatureAutorized("Controllers\\POS\\AnulateSale");
-        $viewData["canViewHistory"] = self::isFeatureAutorized("Controllers\\POS\\History");
+        $viewData["canProcessSale"] = self::isFeatureAuthorized("Controllers\\POS\\ProcessSale");
+        $viewData["canOpenSession"] = self::isFeatureAuthorized("Controllers\\POS\\OpenSession");
+        $viewData["canCloseSession"] = self::isFeatureAuthorized("Controllers\\POS\\CloseSession");
+        $viewData["canAnulateSale"] = self::isFeatureAuthorized("Controllers\\POS\\AnulateSale");
+        $viewData["canViewHistory"] = self::isFeatureAuthorized("Controllers\\POS\\History");
 
         $userId = \Utilities\Security::getUserId();
 
@@ -497,4 +497,3 @@ class POS extends PrivateController
         die();
     }
 }
-

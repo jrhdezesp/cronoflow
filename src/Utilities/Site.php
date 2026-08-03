@@ -45,6 +45,8 @@ class Site
             "controllers\\mnt\\kardex",
             "controllers\\mnt\\movimientos",
             "controllers\\mnt\\ventas",
+            "controllers\\mnt\\clientes",
+            "controllers\\pos",
             "controllers\\mnt\\productos",
             "controllers\\mnt\\producto",
             "controllers\\mnt\\proveedores",
