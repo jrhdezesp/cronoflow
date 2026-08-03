@@ -1,0 +1,51 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: pos_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: proyecto_inventario
+      MYSQL_ROOT_HOST: '%'
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docs/scripts/08_ventas_pos.sql:/docker-entrypoint-initdb.d/08_ventas_pos.sql
+      - ./docs/scripts/00_init_inventario.sql:/docker-entrypoint-initdb.d/00_init_inventario.sql
+    networks:
+      - pos_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+
+  php:
+    image: php:8.2-apache
+    container_name: pos_php
+    ports:
+      - "80:80"
+    volumes:
+      - .:/var/www/html
+    environment:
+      DB_SERVER: mysql
+      DB_USER: root
+      DB_PSWD: root
+      DB_DATABASE: proyecto_inventario
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - pos_network
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  pos_network:
+    driver: bridge
